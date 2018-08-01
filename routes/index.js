@@ -1,9 +1,8 @@
 var express = require('express');
 var hash = require('pbkdf2-password')();
-var mongo = require('mongodb');
+var MongoClient = require('mongodb').MongoClient;
 var router = express.Router();
 
-var MongoClient = mongo.MongoClient;
 var db;
 MongoClient.connect('mongodb://localhost:27017', function (err, client) {
   if (err) throw err;
