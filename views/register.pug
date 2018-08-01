@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  h1 Register
+  form(method='POST' action='/register')
+    input(type='text', name='name', placeholder='Name')
+    br
+    input(type='text', name='email', placeholder='Email')
+    br
+    input(type='password', name='password', placeholder='Password')
+    br
+    input(type='password', name='password_conf', placeholder='Confirm Password')
+    br
+    button(type='submit') Submit
+  

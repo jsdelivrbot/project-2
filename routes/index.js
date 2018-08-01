@@ -1,25 +1,25 @@
 var express = require('express');
 var hash = require('pbkdf2-password')();
+var mongo = require('mongodb');
 var router = express.Router();
 
-var users = {
-  tj: { name: 'tj' }
-};
-
-hash({ password: 'foobar' }, function (err, pass, salt, hash) {
+var MongoClient = mongo.MongoClient;
+var db;
+MongoClient.connect('mongodb://localhost:27017', function (err, client) {
   if (err) throw err;
-  users.tj.salt = salt;
-  users.tj.hash = hash;
+  db = client.db('project1');
 });
 
 function authenticate(name, pass, fn) {
   if (!module.parent) console.log('authenticating %s:%s', name, pass);
-  var user = users[name];
-  if (!user) return fn(new Error('cannot find user'));
-  hash({ password: pass, salt: user.salt }, function (err, pass, salt, hash) {
-    if (err) return fn(err);
-    if (hash === user.hash) return fn(null, user);
-    fn(new Error('invalid password'));
+  db.collection('users').findOne({ name: name }, (err, result) => {
+    if (err) throw err;
+    if (!result) return fn(new Error('cannot find user'));
+    hash({ password: pass, salt: result.salt }, (err, pass, salt, hash) => {
+      if (err) return fn(err);
+      if (hash === result.hash) return fn(null, result);
+      fn(new Error('invalid password'));
+    });
   });
 }
 
@@ -75,6 +75,10 @@ router.post('/login', function (req, res) {
       res.redirect('/login');
     }
   });
+});
+
+router.get('/register', function (req, res) {
+  res.render('register');
 });
 
 module.exports = router;
