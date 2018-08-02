@@ -1,17 +1,32 @@
 var express = require('express');
 var hash = require('pbkdf2-password')();
-var MongoClient = require('mongodb').MongoClient;
-var router = express.Router();
+var mongoose = require('mongoose');
 
-var db;
-MongoClient.connect('mongodb://localhost:27017', function (err, client) {
-  if (err) throw err;
-  db = client.db('project1');
+var router = express.Router();
+mongoose.connect('mongodb://localhost:27017/project1');
+mongoose.Promise = global.Promise;
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+var Schema = mongoose.Schema;
+var UserSchema = new Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  salt: {
+    type: String,
+    required: true
+  },
+  hash: {
+    type: String,
+    required: true
+  }
 });
+var UserModel = mongoose.model('users', UserSchema);
 
 function authenticate(name, pass, fn) {
   if (!module.parent) console.log('authenticating %s:%s', name, pass);
-  db.collection('users').findOne({ name: name }, (err, result) => {
+  UserModel.findOne({ name: name }, (err, result) => {
     if (err) throw err;
     if (!result) return fn(new Error('cannot find user'));
     hash({ password: pass, salt: result.salt }, (err, pass, salt, hash) => {
