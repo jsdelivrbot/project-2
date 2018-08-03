@@ -3,8 +3,8 @@ var hash = require('pbkdf2-password')();
 var mongoose = require('mongoose');
 
 var router = express.Router();
-//mongoose.connect('mongodb://localhost:27017/project1');
-mongoose.connect('mongodb://tom:bootcamp1@ds163781.mlab.com:63781/heroku_4qtbpbj2');
+mongoose.connect('mongodb://localhost:27017/project1');
+//mongoose.connect('mongodb://tom:bootcamp1@ds163781.mlab.com:63781/heroku_4qtbpbj2');
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
@@ -51,21 +51,9 @@ function restrict(req, res, next) {
   }
 }
 
-function register(name, email, password, password_conf, fn) {
-  if (password !== password_conf) return fn(new Error('passwords do not match!'));
-  var user = new UserModel({
-    name: name,
-    email: email
-  });
-  hash({ password: password }, (err, pass, salt, hash) => {
-    if (err) return fn(err);
-    user.salt = salt;
-    user.hash = hash;
-    user.save(function (err) {
-      if (err) console.log(err);
-    });
-    return fn(null, user);
-  });
+function validateEmail(email) {
+  var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+  return re.test(email);
 }
 
 /* GET home page. */
@@ -123,26 +111,58 @@ router.get('/register', function (req, res) {
   res.render('register');
 });
 
-router.post('/register', function (req, res) {
-  register(req.body.name.trim(),
-    req.body.email.trim(),
-    req.body.password.trim(),
-    req.body.password_conf.trim(),
-    function (err, user) {
-      if (user) {
-        req.session.regenerate(function () {
-          req.session.user = user;
-          req.session.success = 'Authenticated as ' + user.name
-            + ' click to <a href="/logout">logout</a>. '
-            + ' You may now access <a href="/restricted">/restricted</a>.';
-          res.redirect('back');
-        });
-      } else {
-        req.session.error = 'Registration failed';
-        console.log(err);
-        res.redirect('/register');
-      }
+function register(name, email, password, password_conf, fn) {
+  var user = new UserModel({
+    name: name,
+    email: email
+  });
+  hash({ password: password }, (err, pass, salt, hash) => {
+    if (err) return fn(err);
+    user.salt = salt;
+    user.hash = hash;
+    UserModel.findOne({ email: email }, (err, result) => {
+      if (err) return fn(new Error('An error occurred. Error: ', err));
+      if (result) return fn(new Error('A user with that email already exists!'));
+      user.save(function (err) {
+        if (err) return fn(new Error('An error occurred. Error: ', err));
+        else return fn(null, user);
+      });
     });
+  });
+}
+
+router.post('/register', function (req, res) {
+  var name = req.body.name.trim();
+  var email = req.body.email.trim();
+  var password = req.body.password.trim();
+  var password_conf = req.body.password_conf.trim();
+  var errorFields = {};
+  if (!name) errorFields['name'] = 'name is required.';
+  else res.locals.name = name;
+  if (!email) errorFields['email'] = 'email is required.';
+  else if (!validateEmail(email)) errorFields['email'] = 'invalid email';
+  else res.locals.email = email;
+  if (!password) errorFields['password'] = 'password is required.';
+  else if (password !== password_conf) errorFields['password_conf'] = 'passwords don\'t match.';
+  if (Object.keys(errorFields).length > 0) {
+    res.locals.errorFields = errorFields;
+    res.render('register');
+    return;
+  }
+  register(name, email, password, password_conf, function (err, user) {
+    if (user) {
+      req.session.regenerate(function () {
+        req.session.user = user;
+        req.session.success = 'Authenticated as ' + user.name
+          + ' click to <a href="/logout">logout</a>. '
+          + ' You may now access <a href="/restricted">/restricted</a>.';
+        res.redirect('back');
+      });
+    } else {
+      if (err) req.session.error = err.message;
+      res.redirect('back');
+    }
+  });
 });
 
 module.exports = router;
