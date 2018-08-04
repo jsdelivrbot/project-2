@@ -4,16 +4,11 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var session = require('express-session');
-var mongoose = require('mongoose');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
 var app = express();
-
-mongoose.connect('mongodb://localhost:27017/project1');
-//mongoose.connect('mongodb://tom:bootcamp1@ds163781.mlab.com:63781/heroku_4qtbpbj2');
-mongoose.Promise = global.Promise;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

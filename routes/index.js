@@ -4,8 +4,7 @@ var mongoose = require('mongoose');
 
 var router = express.Router();
 
-mongoose.connect('mongodb://localhost:27017/project1');
-//mongoose.connect('mongodb://tom:bootcamp1@ds163781.mlab.com:63781/heroku_4qtbpbj2');
+mongoose.connect(process.env.MONGODB_URI);
 mongoose.Promise = global.Promise;
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
