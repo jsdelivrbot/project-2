@@ -2,9 +2,10 @@
 
 An app for retrieving information about air quality in your local area.
 
-To Run (development):
+Running the app locally:
 
-    - Download Node.js, optionally download and install MongoDB.
-    - cd into project folder and run `npm install` to install project and package dependencies.
-    - Run `npm run dev` to start nodemon development server.
+    - Download and install Node.js and MongoDB.
+    - cd into root project directory and type `npm install` to install package dependencies.
+    - Set MONGODB_URI environment variable pointing to the location of your MongoDB instance.
+    - Run `nodemon ./bin/www` to run a local development server.
     - Navigate to localhost:3000 and voila!
