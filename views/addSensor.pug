@@ -1,0 +1,20 @@
+extends layout
+
+block content
+  h1 Add Sensor
+  p !{message}
+  mixin errorField(field)
+    #errorFields
+      if errorFields
+        each val, index in errorFields
+          if index === field
+            span(class='error')= val
+  form(method='POST' action='/sensor/add')
+    input(type='text', name='name', placeholder='Name', value=name)
+    +errorField('name')
+    br
+    input(type='text', name='ssid', placeholder='SSID', value=ssid)
+    +errorField('ssid')
+    br
+    button(type='submit') Submit
+  
