@@ -248,7 +248,6 @@ router.post('/sensor/add', restrict, function (req, res) {
       req.session.success = 'Added sensor ' + ssid + '.';
       res.redirect('back');
     } else {
-      console.log("ERROR!!!!!!!", err);
       if (err) req.session.error = err.message;
       res.redirect('back');
     }
