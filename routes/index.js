@@ -27,7 +27,46 @@ var UserSchema = new Schema({
     required: true
   }
 });
+var SensorDataSchema = new Schema({
+  type: {
+    type: String,
+    required: true
+  },
+  temp: {
+    type: Number,
+    required: true
+  },
+  humidity: {
+    type: Number,
+    required: true
+  },
+  ssid: {
+    type: String,
+    required: true
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now
+  }
+});
+var SensorSchema = new Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  ssid: {
+    type: String,
+    required: true
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'users',
+    required: true
+  }
+})
 var UserModel = mongoose.model('users', UserSchema);
+var SensorDataModel = mongoose.model('sensor_data', SensorDataSchema);
+var SensorModel = mongoose.model('sensors', SensorSchema);
 
 function restrict(req, res, next) {
   if (req.session.user) {
@@ -73,6 +112,31 @@ function register(name, email, password, password_conf, fn) {
         else return fn(null, user);
       });
     });
+  });
+}
+
+function addSensor(name, ssid, userId, fn) {
+  var sensor = new SensorModel({
+    name: name,
+    ssid: ssid,
+    user: userId
+  });
+  sensor.save(function (err) {
+    if (err) return fn(new Error('An error occurred. Error: ', err));
+    else return fn(null, sensor);
+  });
+}
+
+function sensorData(type, temp, humidity, ssid, fn) {
+  var sensorData = new SensorDataModel({
+    type: type,
+    temp: temp,
+    humidity: humidity,
+    ssid: ssid
+  });
+  sensorData.save(function (err) {
+    if (err) return fn(new Error('An error occurred. Error: ', err));
+    else return fn(null, sensorData);
   });
 }
 
@@ -154,6 +218,50 @@ router.post('/register', function (req, res) {
           + ' You may now access <a href="/restricted">/restricted</a>.';
         res.redirect('back');
       });
+    } else {
+      if (err) req.session.error = err.message;
+      res.redirect('back');
+    }
+  });
+});
+
+router.get('/sensor/add', restrict, function (req, res) {
+  res.render('addSensor');
+});
+
+router.post('/sensor/add', restrict, function (req, res) {
+  var name = req.body.name.trim();
+  var ssid = req.body.ssid.trim();
+  var userId = req.session.user._id;
+  var errorFields = {};
+  if (!name) errorFields['name'] = 'name is required.';
+  else res.locals.name = name;
+  if (!ssid) errorFields['ssid'] = 'SSID is required.';
+  else res.locals.ssid = ssid;
+  if (Object.keys(errorFields).length > 0) {
+    res.locals.errorFields = errorFields;
+    res.render('addSensor');
+    return;
+  }
+  addSensor(name, ssid, userId, function (err, data) {
+    if (data) {
+      req.session.success = 'Added sensor ' + ssid + '.';
+      res.redirect('back');
+    } else {
+      if (err) req.session.error = err.message;
+      res.redirect('back');
+    }
+  });
+});
+
+router.get('/sensor/data', function (req, res) {
+  var type = req.body.type.trim();
+  var temp = parseFloat(req.body.temp);
+  var humidity = parseFloat(req.body.humidity);
+  var ssid = req.body.ssid.trim();
+  sensorData(type, temp, humidity, ssid, function (err, data) {
+    if (data) {
+      res.redirect('back');
     } else {
       if (err) req.session.error = err.message;
       res.redirect('back');
