@@ -254,7 +254,7 @@ router.post('/sensor/add', restrict, function (req, res) {
   });
 });
 
-router.get('/data', function (req, res) {
+router.get('/sensor/data', function (req, res) {
   var type = req.body.type.trim();
   var temp = parseFloat(req.body.temp);
   var humidity = parseFloat(req.body.humidity);
