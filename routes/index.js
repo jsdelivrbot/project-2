@@ -82,9 +82,9 @@ function validateEmail(email) {
   return re.test(email);
 }
 
-function authenticate(name, pass, fn) {
-  if (!module.parent) console.log('authenticating %s:%s', name, pass);
-  UserModel.findOne({ name: name }, (err, result) => {
+function authenticate(email, pass, fn) {
+  if (!module.parent) console.log('authenticating %s:%s', email, pass);
+  UserModel.findOne({ email: email }, (err, result) => {
     if (err) throw err;
     if (!result) return fn(new Error('cannot find user'));
     hash({ password: pass, salt: result.salt }, (err, pass, salt, hash) => {
@@ -166,7 +166,7 @@ router.get('/logout', function (req, res) {
 });
 
 router.get('/login', function (req, res) {
-  res.render('login');
+  res.redirect('/login.html');
 });
 
 router.post('/login', function (req, res) {
@@ -177,7 +177,7 @@ router.post('/login', function (req, res) {
         req.session.success = 'Authenticated as ' + user.name
           + ' click to <a href="/logout">logout</a>. '
           + ' You may now access <a href="/restricted">/restricted</a>.';
-        res.redirect('/login');
+        res.redirect('/dash.html');
       });
     } else {
       req.session.error = 'Authentication failed, please check your '
@@ -216,7 +216,7 @@ router.post('/register', function (req, res) {
         req.session.success = 'Authenticated as ' + user.name
           + ' click to <a href="/logout">logout</a>. '
           + ' You may now access <a href="/restricted">/restricted</a>.';
-        res.redirect('back');
+        res.redirect('/dash.html');
       });
     } else {
       if (err) req.session.error = err.message;
