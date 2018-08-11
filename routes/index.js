@@ -188,7 +188,7 @@ router.post('/login', function (req, res) {
 });
 
 router.get('/register', function (req, res) {
-  res.render('register');
+  res.redirect('/register.html');
 });
 
 router.post('/register', function (req, res) {
